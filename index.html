@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obećao sam</title>
+<meta name="theme-color" content="#2446a8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10141b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* Jedan stupac za mobitel: unos gore, popis obveza po hitnosti ispod. */
+:root{
+  --bg:#f2f4f8; --surface:#ffffff; --fg:#18202d; --muted:#5b6677; --line:#dbe0e9;
+  --accent:#2446a8; --accent-ink:#ffffff; --accent-soft:#e3e9fb;
+  --late:#b8372b; --late-soft:#fbe7e4; --today:#9a6500; --today-soft:#fbf0d9; --ok:#21794b;
+  --shadow:0 1px 2px rgba(20,30,60,.06),0 4px 14px rgba(20,30,60,.06);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#10141b; --surface:#181e28; --fg:#e7ebf2; --muted:#98a3b4; --line:#283142;
+  --accent:#7d9bf0; --accent-ink:#0d1424; --accent-soft:#1f2a45;
+  --late:#f08a7e; --late-soft:#3a1f1d; --today:#e8b75a; --today-soft:#3a2f17; --ok:#6fd19b;
+  --shadow:none; color-scheme:dark;
+}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--font);-webkit-tap-highlight-color:transparent;
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.count{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+main{max-width:640px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:grid;gap:18px}
+
+/* Unos */
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;display:grid;gap:10px}
+.composer.editing{border-color:var(--accent)}
+.row{display:flex;gap:10px;align-items:stretch}
+textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;min-height:84px;line-height:1.4}
+textarea:focus,input:focus{outline:none;border-color:var(--accent)}
+.mic{flex:none;width:72px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;gap:2px;font-size:12px;font-weight:600}
+.mic svg{width:28px;height:28px}
+.mic.on{background:var(--late);color:#fff;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.75}}
+@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
+input[type=text],input[type=date]{width:100%;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg);font-weight:600}
+.actions{display:flex;gap:8px}
+.primary{flex:1;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);padding:11px;font-weight:700}
+.primary:disabled{opacity:.45}
+.ghost{border:1px solid var(--line);background:transparent;border-radius:10px;padding:10px 14px}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+
+/* Kartica podsjetnika */
+.notice{background:var(--accent-soft);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.notice p{margin:0}
+.notice .actions .ghost{border-color:transparent;color:var(--muted)}
+
+/* Popis */
+section h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px 2px;display:flex;justify-content:space-between}
+section h2 span{font-variant-numeric:tabular-nums}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:auto 1fr;align-items:start;overflow:hidden}
+.item.late{box-shadow:inset 4px 0 0 var(--late)}
+.item.today{box-shadow:inset 4px 0 0 var(--today)}
+#list{display:grid;gap:18px}
+.check{width:48px;height:48px;border:0;background:transparent;display:grid;place-items:center}
+.check::before{content:"";width:20px;height:20px;border:2px solid var(--muted);border-radius:6px}
+.item.done .check::before{background:var(--ok);border-color:var(--ok);content:"✓";color:var(--surface);font-size:14px;font-weight:800;line-height:20px;text-align:center}
+.body{padding:11px 12px 10px 0;min-width:0;border:0;background:transparent;text-align:left}
+.txt{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.item.done .txt{text-decoration:line-through;color:var(--muted)}
+.meta{margin:3px 0 0;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.who{color:var(--fg);font-weight:600}
+.due.late{color:var(--late);font-weight:600}
+.due.today{color:var(--today);font-weight:600}
+.tools{grid-column:1/-1;display:flex;gap:6px;padding:0 10px 10px 48px;flex-wrap:wrap}
+.tools button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:13px}
+.tools .danger{color:var(--late)}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;border:1px dashed var(--line);border-radius:12px}
+
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+summary{padding:10px 0;font-weight:600;cursor:pointer}
+.settings{display:grid;gap:14px;padding:4px 0 14px}
+.settings h3{font-size:14px;margin:0 0 4px}
+.settings .actions{flex-wrap:wrap}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  background:var(--fg);color:var(--bg);border-radius:10px;padding:10px 12px 10px 16px;display:flex;gap:14px;align-items:center;
+  max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:20}
+.toast button{border:0;background:transparent;color:var(--bg);font-weight:700;text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <h1>Obećao sam</h1>
+  <span class="count" id="count"></span>
+</header>
+
+<main>
+  <div class="notice" id="reminderNotice" hidden>
+    <p><strong>Postavi dnevni podsjetnik.</strong> Svaki radni dan u 9:30 Google Kalendar će te podsjetiti da pregledaš obveze.</p>
+    <div class="actions">
+      <button class="primary" id="noticeSet" type="button">Postavi u kalendar</button>
+      <button class="ghost" id="noticeHide" type="button">Kasnije</button>
+    </div>
+  </div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <div class="row">
+      <textarea id="text" placeholder="Što si obećao?" rows="3" aria-label="Obveza"></textarea>
+      <button class="mic" id="mic" type="button" aria-label="Diktiraj" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        <span id="micLabel">Govori</span>
+      </button>
+    </div>
+    <p class="hint" id="micHint" hidden>Za diktiranje dodirni polje i mikrofon na tipkovnici.</p>
+    <input type="text" id="who" placeholder="Tko je tražio? (nije obavezno)" aria-label="Tko je tražio">
+    <div class="chips" role="group" aria-label="Rok">
+      <button type="button" class="chip" data-due="" aria-pressed="true">Bez roka</button>
+      <button type="button" class="chip" data-due="today" aria-pressed="false">Danas</button>
+      <button type="button" class="chip" data-due="tomorrow" aria-pressed="false">Sutra</button>
+      <button type="button" class="chip" data-due="friday" aria-pressed="false">Do petka</button>
+      <button type="button" class="chip" data-due="pick" aria-pressed="false">Datum…</button>
+    </div>
+    <input type="date" id="date" aria-label="Datum roka" hidden>
+    <div class="actions">
+      <button class="primary" id="save" type="submit" disabled>Spremi</button>
+      <button class="ghost" id="cancel" type="button" hidden>Odustani</button>
+    </div>
+  </form>
+
+  <div id="list"></div>
+
+  <details id="settings">
+    <summary>Postavke</summary>
+    <div class="settings">
+      <div>
+        <h3>Dnevni podsjetnik</h3>
+        <p class="hint">Otvara Google Kalendar s događajem „Pregledaj obveze“ svaki radni dan u 9:30. U događaju postavi obavijest na „U vrijeme događaja“.</p>
+        <div class="actions" style="margin-top:8px"><button class="ghost" id="setReminder" type="button">Postavi podsjetnik u 9:30</button></div>
+      </div>
+      <div>
+        <h3>Sigurnosna kopija</h3>
+        <p class="hint">Obveze su spremljene samo na ovom mobitelu. Povremeno izvezi kopiju.</p>
+        <div class="actions" style="margin-top:8px">
+          <button class="ghost" id="export" type="button">Izvezi</button>
+          <button class="ghost" id="importBtn" type="button">Uvezi</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </div>
+    </div>
+  </details>
+</main>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button id="toastUndo" type="button">Poništi</button></div>
+
+<script>
+const KEY='obecao.v1', DRAFT='obecao.draft', REM='obecao.reminder';
+const $=id=>document.getElementById(id);
+const store={
+  get(k,f){try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v)}catch{return f}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+let items=store.get(KEY,[]);
+let dueMode='', editingId=null, openId=null;
+
+/* ---------- datumi ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const plus=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+const today=()=>iso(new Date());
+const fromIso=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const DAYS=['ned','pon','uto','sri','čet','pet','sub'];
+function resolveDue(){
+  if(dueMode==='today')return today();
+  if(dueMode==='tomorrow')return plus(1);
+  if(dueMode==='friday')return plus((5-new Date().getDay()+7)%7);
+  if(dueMode==='pick')return $('date').value||null;
+  return null;
+}
+function dueLabel(due){
+  const diff=Math.round((fromIso(due)-fromIso(today()))/864e5);
+  if(diff===0)return'danas';
+  if(diff===1)return'sutra';
+  if(diff===-1)return'jučer';
+  if(diff<0)return`kasni ${-diff} dana`;
+  const d=fromIso(due);
+  return `${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth()+1}.`;
+}
+function ago(ts){
+  const days=Math.floor((fromIso(today())-fromIso(iso(new Date(ts))))/864e5);
+  if(days<=0)return'upisano danas';
+  if(days===1)return'upisano jučer';
+  return`upisano prije ${days} dana`;
+}
+
+/* ---------- spremanje ---------- */
+function persist(){store.set(KEY,items);render()}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- prikaz ---------- */
+function render(){
+  const t=today(), open=items.filter(i=>!i.done);
+  const late=open.filter(i=>i.due&&i.due<t).sort((a,b)=>a.due.localeCompare(b.due));
+  const now=open.filter(i=>i.due===t);
+  const next=open.filter(i=>i.due&&i.due>t).sort((a,b)=>a.due.localeCompare(b.due));
+  const none=open.filter(i=>!i.due).sort((a,b)=>b.created-a.created);
+  const done=items.filter(i=>i.done).sort((a,b)=>b.done-a.done).slice(0,15);
+  $('count').textContent=open.length?`${open.length} otvoren${open.length%10===1&&open.length%100!==11?'a':'ih'}`:'';
+  const sec=(title,arr)=>arr.length?`<section><h2>${title}<span>${arr.length}</span></h2><ul>${arr.map(itemHtml).join('')}</ul></section>`:'';
+  let html=sec('Kasni',late)+sec('Danas',now)+sec('Uskoro',next)+sec('Bez roka',none);
+  if(!open.length)html=`<div class="empty">Nema otvorenih obveza.<br>Kad te netko zaustavi na hodniku, upiši to gore.</div>`;
+  if(done.length)html+=`<section><h2>Nedavno gotovo<span>${done.length}</span></h2><ul>${done.map(itemHtml).join('')}</ul></section>`;
+  $('list').innerHTML=html;
+}
+function itemHtml(i){
+  const t=today();
+  const cls=i.done?'done':i.due&&i.due<t?'late':i.due===t?'today':'';
+  const dueCls=!i.done&&i.due?(i.due<t?'late':i.due===t?'today':''):'';
+  const meta=[
+    i.who?`<span class="who">${esc(i.who)}</span>`:'',
+    i.due?`<span class="due ${dueCls}">${dueLabel(i.due)}</span>`:'',
+    `<span>${ago(i.created)}</span>`
+  ].join('');
+  const tools=openId===i.id?`<div class="tools">
+      ${i.done?'':`<button type="button" data-act="cal" data-id="${i.id}">U kalendar</button><button type="button" data-act="edit" data-id="${i.id}">Uredi</button>`}
+      <button type="button" class="danger" data-act="del" data-id="${i.id}">Obriši</button></div>`:'';
+  return `<li class="item ${cls}">
+    <button class="check" type="button" data-act="toggle" data-id="${i.id}" aria-label="${i.done?'Vrati u otvorene':'Označi kao gotovo'}"></button>
+    <button class="body" type="button" data-act="open" data-id="${i.id}" aria-expanded="${openId===i.id}">
+      <p class="txt">${esc(i.text)}</p><p class="meta">${meta}</p></button>${tools}</li>`;
+}
+
+/* ---------- unos ---------- */
+const text=$('text'), who=$('who');
+function refreshSave(){$('save').disabled=!text.value.trim()}
+function saveDraft(){if(!editingId)store.set(DRAFT,{text:text.value,who:who.value})}
+text.addEventListener('input',()=>{refreshSave();saveDraft()});
+who.addEventListener('input',saveDraft);
+function setDue(mode){
+  dueMode=mode;
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.due===mode));
+  $('date').hidden=mode!=='pick';
+  if(mode==='pick'){if(!$('date').value)$('date').value=plus(1);$('date').focus()}
+}
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>setDue(c.dataset.due)));
+
+function resetComposer(){
+  text.value='';who.value='';$('date').value='';setDue('');
+  editingId=null;$('composer').classList.remove('editing');
+  $('save').textContent='Spremi';$('cancel').hidden=true;
+  store.set(DRAFT,null);refreshSave();
+}
+$('composer').addEventListener('submit',e=>{
+  e.preventDefault();
+  stopMic();
+  const t=text.value.trim(); if(!t)return;
+  const due=resolveDue(), w=who.value.trim();
+  if(editingId){
+    const it=items.find(i=>i.id===editingId); if(it){it.text=t;it.who=w;it.due=due}
+    openId=null;
+  }else{
+    items.push({id:uid(),text:t,who:w,due,created:Date.now(),done:null});
+    toast('Spremljeno');
+  }
+  resetComposer();persist();
+});
+$('cancel').addEventListener('click',()=>{resetComposer()});
+
+function startEdit(id){
+  const it=items.find(i=>i.id===id); if(!it)return;
+  editingId=id; text.value=it.text; who.value=it.who||'';
+  if(it.due){dueMode='pick';$('date').value=it.due;setDue('pick')}else setDue('');
+  $('composer').classList.add('editing');$('save').textContent='Spremi izmjene';$('cancel').hidden=false;
+  refreshSave();window.scrollTo({top:0,behavior:'smooth'});text.focus();
+}
+
+/* ---------- popis: akcije ---------- */
+$('list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b)return;
+  const id=b.dataset.id, it=items.find(i=>i.id===id); if(!it)return;
+  const act=b.dataset.act;
+  if(act==='open'){openId=openId===id?null:id;render();return}
+  if(act==='toggle'){
+    const prev=it.done; it.done=it.done?null:Date.now(); openId=null; persist();
+    if(it.done)toast('Gotovo',()=>{it.done=prev;persist()});
+  }
+  if(act==='del'){
+    const idx=items.indexOf(it); items.splice(idx,1); openId=null; persist();
+    toast('Obrisano',()=>{items.splice(idx,0,it);persist()});
+  }
+  if(act==='edit')startEdit(id);
+  if(act==='cal')openCalendarForItem(it);
+});
+
+/* ---------- Google Kalendar ---------- */
+const appUrl=()=>location.origin+location.pathname;
+function gcal(params){
+  const q=new URLSearchParams({action:'TEMPLATE',...params});
+  window.open('https://calendar.google.com/calendar/render?'+q.toString(),'_blank');
+}
+function openCalendarForItem(it){
+  const day=(it.due||plus(1)).replaceAll('-','');
+  gcal({
+    text:'Obećao: '+it.text.slice(0,80),
+    dates:`${day}T093000/${day}T094500`, ctz:'Europe/Zagreb',
+    details:(it.who?`Tražio/la: ${it.who}\n\n`:'')+it.text+'\n\n'+appUrl()
+  });
+}
+function setDailyReminder(){
+  const d=new Date();
+  const afterSlot=d.getHours()>9||(d.getHours()===9&&d.getMinutes()>=30);
+  if(afterSlot)d.setDate(d.getDate()+1);
+  while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);
+  const day=iso(d).replaceAll('-','');
+  gcal({
+    text:'Pregledaj obveze',
+    dates:`${day}T093000/${day}T094000`, ctz:'Europe/Zagreb',
+    recur:'RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+    details:'Otvori aplikaciju Obećao sam i prođi otvorene obveze.\n\n'+appUrl()
+  });
+  store.set(REM,'set'); $('reminderNotice').hidden=true;
+}
+$('noticeSet').addEventListener('click',setDailyReminder);
+$('setReminder').addEventListener('click',setDailyReminder);
+$('noticeHide').addEventListener('click',()=>{store.set(REM,Date.now());$('reminderNotice').hidden=true});
+
+/* ---------- diktiranje ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, listening=false;
+if(SR){
+  $('mic').hidden=false;
+  $('mic').addEventListener('click',()=>listening?stopMic():startMic());
+}else{
+  $('micHint').hidden=false;
+}
+function startMic(){
+  rec=new SR(); rec.lang='hr-HR'; rec.interimResults=true; rec.continuous=true;
+  const base=text.value.trim()?text.value.trim()+' ':'';
+  let finals='';
+  rec.onresult=ev=>{
+    let interim='';
+    for(let k=ev.resultIndex;k<ev.results.length;k++){
+      const r=ev.results[k];
+      if(r.isFinal)finals+=r[0].transcript.trim()+' '; else interim+=r[0].transcript;
+    }
+    let out=(base+finals+interim).trim();
+    if(out)out=out[0].toUpperCase()+out.slice(1);
+    text.value=out; refreshSave(); saveDraft();
+  };
+  rec.onerror=ev=>{
+    if(ev.error==='not-allowed')toast('Dopusti mikrofon u postavkama preglednika');
+    else if(ev.error!=='no-speech'&&ev.error!=='aborted')toast('Diktiranje nije uspjelo, pokušaj ponovo');
+  };
+  rec.onend=()=>setListening(false);
+  try{rec.start();setListening(true)}catch{setListening(false)}
+}
+function stopMic(){if(rec&&listening){try{rec.stop()}catch{}}}
+function setListening(on){
+  listening=on; $('mic').classList.toggle('on',on);
+  $('micLabel').textContent=on?'Stani':'Govori';
+  $('mic').setAttribute('aria-label',on?'Zaustavi diktiranje':'Diktiraj');
+}
+
+/* ---------- kopija ---------- */
+$('export').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`obecao-sam-${today()}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(!Array.isArray(data))throw 0;
+    const known=new Set(items.map(i=>i.id)); let n=0;
+    data.forEach(i=>{if(i&&i.id&&i.text&&!known.has(i.id)){items.push(i);n++}});
+    persist(); toast(`Uvezeno: ${n}`);
+  }catch{toast('Datoteka nije ispravna kopija')}
+  e.target.value='';
+});
+
+/* ---------- obavijest dolje ---------- */
+let toastTimer, undoFn=null;
+function toast(msg,undo){
+  $('toastMsg').textContent=msg; undoFn=undo||null; $('toastUndo').hidden=!undo;
+  $('toast').hidden=false; clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{$('toast').hidden=true;undoFn=null},undo?5000:1800);
+}
+$('toastUndo').addEventListener('click',()=>{if(undoFn)undoFn();undoFn=null;$('toast').hidden=true});
+
+/* ---------- start ---------- */
+const draft=store.get(DRAFT,null);
+if(draft){text.value=draft.text||'';who.value=draft.who||''}
+refreshSave();
+{const r=store.get(REM,null);
+ $('reminderNotice').hidden= r==='set' || (typeof r==='number' && Date.now()-r<3*864e5);}
+render();
+if(new URLSearchParams(location.search).has('novo'))text.focus();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
