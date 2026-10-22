@@ -348,16 +348,14 @@ if(SR){
   $('micHint').hidden=false;
 }
 function startMic(){
-  rec=new SR(); rec.lang='hr-HR'; rec.interimResults=true; rec.continuous=true;
+  // Chrome na Androidu u "continuous" načinu vraća isti tekst više puta,
+  // zato slušamo jednu rečenicu i tekst uvijek gradimo iznova iz zadnjeg rezultata.
+  rec=new SR(); rec.lang='hr-HR'; rec.interimResults=true; rec.continuous=false;
   const base=text.value.trim()?text.value.trim()+' ':'';
-  let finals='';
   rec.onresult=ev=>{
-    let interim='';
-    for(let k=ev.resultIndex;k<ev.results.length;k++){
-      const r=ev.results[k];
-      if(r.isFinal)finals+=r[0].transcript.trim()+' '; else interim+=r[0].transcript;
-    }
-    let out=(base+finals+interim).trim();
+    const last=ev.results[ev.results.length-1];
+    const heard=last?last[0].transcript.trim():'';
+    let out=(base+heard).trim();
     if(out)out=out[0].toUpperCase()+out.slice(1);
     text.value=out; refreshSave(); saveDraft();
   };
